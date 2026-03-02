@@ -43,7 +43,7 @@ class BigXmlWidget(QTreeWidget, QWidget):
             self.currentFile.setFileName(fileName)
             if self.currentFile.open(QIODevice.ReadOnly | QIODevice.Text):
                 self.currentFile.seek(0)
-                self.readBigXMLtoLevel(2)
+                self.readBigXMLtoLevel(3)
                 return True
             else:
                 QMessageBox.warning(self, self.tr("BigXmlReader"),
@@ -53,10 +53,10 @@ class BigXmlWidget(QTreeWidget, QWidget):
 
     def readBigXMLtoLevel(self,levelDown: int):
         xml = QXmlStreamReader(self.currentFile)
-        item = BigXmlItem(self)
+        #itemCurrent = BigXmlItem(self, XmlItemType.Empty)
         level = 0;
 
-        QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
+        #QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
         self.clear()
         while not xml.atEnd():
             tokentype = xml.readNext() 
@@ -65,36 +65,38 @@ class BigXmlWidget(QTreeWidget, QWidget):
                 case QXmlStreamReader.StartElement:
                     level = level+1
                     if level <= levelDown:
-                        item = self.createChildItem(item, XmlItemType.Node)
-                        item.setText(0, xml.name().toString());
-                        #item.setIcon(0, folderIcon);
+                        if level == 1:
+                            itemCurrent = BigXmlItem(self, XmlItemType.Node)
+                            #self.addTopLevelItem(item)
+                        else:
+                            if (itemCurrent): 
+                                itemCurrent = BigXmlItem(itemCurrent, XmlItemType.Node) 
+                        itemCurrent.setText(0, xml.name());
+                        #itemCurrent.setIcon(0, folderIcon)  
                         if level == levelDown:
-                            newItem = BigXmlItem(item, XmlItemType.Empty)
+                            BigXmlItem(itemCurrent, XmlItemType.Empty)
                         else:
                             for attr in xml.attributes():
-                                childItem = BigXmlItem(item, XmlItemType.Attribute)
-                                childItem.setText(0, attr.name().toString())
-                                childItem.setText(1, attr.value().toString())
+                                childItem = BigXmlItem(itemCurrent, XmlItemType.Attribute)
+                                childItem.setText(0, attr.name())
+                                childItem.setText(1, attr.value())
             
-                    break
                 case QXmlStreamReader.EndElement:
                     if level <= levelDown:
-                        if (item): item = item.parent()
+                        if (itemCurrent): itemCurrent = itemCurrent.parent()
                         level = level - 1
-                    break
+
                 case QXmlStreamReader.Characters, QXmlStreamReader.DTD, QXmlStreamReader.Comment:
                     if (level <= levelDown):
-                        if (item):
-                            name = xml.text().toString().simplified()
+                        if (itemCurrent):
+                            name = xml.text()
                             if ( name.size() > 0):
-                                item.setText(1, name)
-                                item.setIcon(0, bookmarkIcon)
-                                item.setXmlType(BigXmlItem.Comment)
-                                item.takeChildren().clear()
-                            
-                    break
+                                itemCurrent.setText(1, name)
+                                #itemCurrent.setIcon(0, bookmarkIcon)
+                                itemCurrent.setXmlType(BigXmlItem.Comment)
+                                itemCurrent.takeChildren().clear()
 
         self.resizeColumnToContents(0)
         self.resizeColumnToContents(1)
-        QApplication.restoreOverrideCursor()
+        #QApplication.restoreOverrideCursor()
         return not xml.error()

@@ -37,7 +37,7 @@ class BigXmlWidget(QTreeWidget, QWidget):
         self.setHeaderLabels(HEADERS)
         self.setAlternatingRowColors(True)
         
-        #self.itemExpanded.connect(self.expandBigXmlItem)
+        self.itemExpanded.connect(self.expandBigXmlItem)
         self.itemActivated.connect(self.enterBigXmlItem)
 
 
@@ -70,25 +70,25 @@ class BigXmlWidget(QTreeWidget, QWidget):
                     level = level+1
                     if level <= levelDown:
                         if level == 1:
-                            item = QTreeWidgetItem("")
-                            self.addTopLevelItem(item)
+                            itemCurrent = QTreeWidgetItem("+")
+                            self.addTopLevelItem(itemCurrent)
                         else:
-                            item = QTreeWidgetItem("")
+                            item = QTreeWidgetItem("+")
                             itemCurrent.addChild(item)
-                        item.setText(0, xml.name())
-                        item.setData(0, Qt.UserRole, XmlItemType.Node)
-                        #itemCurrent.setIcon(0, folderIcon)
-                        itemCurrent = item   
+                            itemCurrent = item
+                        itemCurrent.setText(0, xml.name())    
+                        #itemCurrent.setData(0, Qt.UserRole, XmlItemType.Node)
+                        #itemCurrent.setIcon(0, folderIcon) 
                         if level == levelDown:
                             item = QTreeWidgetItem("")
-                            item.setData(0, Qt.UserRole, XmlItemType.Empty)
+                            #item.setData(0, Qt.UserRole, XmlItemType.Empty)
                             itemCurrent.addChild(item)
                         else:
                             for attr in xml.attributes():
-                                childItem = QTreeWidgetItem("")
+                                childItem = QTreeWidgetItem("-")
                                 childItem.setText(0, attr.name())
                                 childItem.setText(1, attr.value())
-                                childItem.setData(0, Qt.UserRole,XmlItemType.Attribute)
+                                #childItem.setData(0, Qt.UserRole,XmlItemType.Attribute)
                                 itemCurrent.addChild(childItem)
             
                 case QXmlStreamReader.EndElement:
@@ -98,11 +98,10 @@ class BigXmlWidget(QTreeWidget, QWidget):
 
                 case QXmlStreamReader.Characters | QXmlStreamReader.DTD | QXmlStreamReader.Comment:
                     if (level <= levelDown):
-                        if (itemCurrent):
-                            itemCurrent.setText(1, xml.text().strip())
-                            itemCurrent.setData(0, Qt.UserRole,XmlItemType.Comment)
-                            #itemCurrent.setIcon(0, bookmarkIcon)
-                            itemCurrent.takeChildren().clear()
+                        itemCurrent.setText(1, xml.text())
+                        #itemCurrent.setData(1, Qt.UserRole,XmlItemType.Comment)
+                        #itemCurrent.setIcon(0, bookmarkIcon)
+                        #itemCurrent.takeChildren().clear()
 
         self.resizeColumnToContents(0)
         self.resizeColumnToContents(1)

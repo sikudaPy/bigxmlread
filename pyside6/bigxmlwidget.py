@@ -94,7 +94,7 @@ class BigXmlWidget(QTreeWidget, QWidget):
                 case QXmlStreamReader.EndElement:
                     if level <= levelDown:
                         itemCurrent = itemCurrent.parent()
-                        level = level - 1
+                    level = level - 1    
 
                 case QXmlStreamReader.Characters | QXmlStreamReader.DTD | QXmlStreamReader.Comment:
                     if (level <= levelDown):

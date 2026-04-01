@@ -40,7 +40,7 @@ class BigXmlWidget(QTreeWidget, QWidget):
         #folderIcon.addPixmap( QIcon(':/images/open.png'), QIcon.Normal, QIcon.On)
         #folderIcon.addPixmap( QIcon(':/images/close.png'), QIcon.Normal, QIcon.Off)
 
-        HEADERS = (self.tr("Node/Attribute"), self.tr("Value"))
+        HEADERS = (self.tr("Node/Attribute"), self.tr("Value"), self.tr("DEBUG"))
         self.setColumnCount(len(HEADERS))
         self.setHeaderLabels(HEADERS)
         self.setAlternatingRowColors(True)
@@ -110,6 +110,9 @@ class BigXmlWidget(QTreeWidget, QWidget):
                 case QXmlStreamReader.Characters | QXmlStreamReader.DTD | QXmlStreamReader.Comment:
                     if (level <= levelDown):
                         itemCurrent.setText(1, xml.text())
+
+                        indexModel = self.indexFromItem(itemCurrent)
+                        itemCurrent.setText(2, str(indexModel.row())+'-'+str(indexModel.column()))
                         #itemCurrent.setData(1, Qt.UserRole,XmlItemType.Comment)
                         #itemCurrent.setIcon(0, bookmarkIcon)
                         #itemCurrent.takeChildren().clear()
@@ -133,7 +136,7 @@ class BigXmlWidget(QTreeWidget, QWidget):
         if itemBegin:
             #QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
             if itemBegin.childCount() == 1:
-                if itemBegin.child(0).data(0, Qt.UserRole) == XmlItemType.Empty :
+                if itemBegin.child(0).data(0, Qt.UserRole) == XmlItemType.Empty:
 
                     itemBegin.takeChildren().clear()
                     # QXmlStreamReader xml;
@@ -157,6 +160,15 @@ class BigXmlWidget(QTreeWidget, QWidget):
                 #     k++;
                 # }
                 # int maxLevel = i;
+                    # xml = QXmlStreamReader(self.currentFile)
+                    # itemCurrent = QTreeWidgetItem("")
+                    # while not xml.atEnd():
+                    #     tokentype = xml.readNext() 
+
+                    #     match tokentype:
+                    #         case QXmlStreamReader.StartElement:
+
+
 
     #             QString strFilename;
     #             openFile(strFilename, xml, false);

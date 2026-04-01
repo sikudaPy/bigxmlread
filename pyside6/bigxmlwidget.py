@@ -19,7 +19,7 @@ class XmlItemType(Enum):
 #      def type(self):
 #         return self.__type   
 
-intTreeInitialLevel = 3 #initial open level
+intTreeInitialLevel = 5 #initial open level
 
 class BigXmlWidget(QTreeWidget, QWidget):
 
@@ -71,6 +71,7 @@ class BigXmlWidget(QTreeWidget, QWidget):
         QApplication.setOverrideCursor(QCursor(Qt.WaitCursor))
         self.clear()
         level = 0
+        indexEntry = [0]
         while not xml.atEnd():
             tokentype = xml.readNext() 
 
@@ -87,6 +88,10 @@ class BigXmlWidget(QTreeWidget, QWidget):
                             itemCurrent = item
                         itemCurrent.setText(0, xml.name())    
                         itemCurrent.setData(0, Qt.UserRole, XmlItemType.Node)
+
+                        indexEntry.insert(level, itemCurrent.childCount())
+                        #indexModel = self.indexFromItem(itemCurrent)
+                        itemCurrent.setText(2, ", ".join(map(str,indexEntry)))
                         #itemCurrent.setIcon(0, self.icon_dirOpen)
                         if level == levelDown:
                             item = QTreeWidgetItem("")
@@ -104,15 +109,17 @@ class BigXmlWidget(QTreeWidget, QWidget):
             
                 case QXmlStreamReader.EndElement:
                     if level <= levelDown:
+                        indexEntry.pop()
                         itemCurrent = itemCurrent.parent()
-                    level = level - 1    
+                    level = level - 1 
+                    
+
 
                 case QXmlStreamReader.Characters | QXmlStreamReader.DTD | QXmlStreamReader.Comment:
                     if (level <= levelDown):
                         itemCurrent.setText(1, xml.text())
 
-                        indexModel = self.indexFromItem(itemCurrent)
-                        itemCurrent.setText(2, str(indexModel.row())+'-'+str(indexModel.column()))
+                        
                         #itemCurrent.setData(1, Qt.UserRole,XmlItemType.Comment)
                         #itemCurrent.setIcon(0, bookmarkIcon)
                         #itemCurrent.takeChildren().clear()

@@ -1,45 +1,33 @@
 import sys
 
-from PySide6.QtWidgets import (QApplication, QTreeWidget, QTreeWidgetItem)
+from PySide6.QtWidgets import (QApplication, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget)
 from PySide6.QtGui import *
 from PySide6.QtCore import *
 
-app = QApplication(sys.argv)
+class TreeExample(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.layout = QVBoxLayout(self)
+        self.tree = QTreeWidget()
+        self.tree.setColumnCount(1)
+        self.layout.addWidget(self.tree)
 
-tree = QTreeWidget()
-tree.setHeaderLabels(["Название", "Значение"])
-items = [QTreeWidgetItem(['index %i' % i]) for i in range(5)]
-subitems = [QTreeWidgetItem(['index %i' % i]) for i in range(5)]
+        # Add dummy data
+        for i in range(3):
+            parent = QTreeWidgetItem(self.tree, [f"Item {i}"])
+            QTreeWidgetItem(parent, ["Child"])
 
-index = 0
-for item in items:
-    index = index +1
-    tree.addTopLevelItem(item)
-    indexModel = tree.indexFromItem(item)
-    item.setData(1, Qt.DisplayRole, str(indexModel.row())+'-'+str(indexModel.column()))
-    
-for subitem in subitems:
-    item.addChild(subitem)
-    subitem.setText(1, "parent "+str(item))
-    #subitem.setData(1, Qt.UserRole, item)   
+        # Connect expansion signal to clear the tree
+        self.tree.itemExpanded.connect(self.clear_tree)
+        
+    def clear_tree(self, item):
+        print(f"Expanding: {item.text(0)}. Clearing tree.")
+        pass
+        # This will remove all items, including the one just clicked
+        #self.tree.clear()
 
-# print("indexes:")
-# for subitem in subitems:
-#     print(tree.indexOfTopLevelItem(subitem),)
-tree.resizeColumnToContents(0)
-tree.resizeColumnToContents(1)
-
-# for i in range(3):
-#     item = tree.itemAt(0, 0)
-#     if item:
-#         item.setText(1, str(i))
-
-#     item = tree.itemAt(1, 1)
-#     if item:
-#         item.setText(1, '-'+str(i)) 
-
-#itemFromIndex(index)           
-
-
-tree.show()
-app.exec()
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    window = TreeExample()
+    window.show()
+    sys.exit(app.exec_())

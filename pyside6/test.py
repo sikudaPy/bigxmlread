@@ -21,7 +21,9 @@ class TreeExample(QWidget):
         self.tree.itemExpanded.connect(self.clear_tree)
         
     def clear_tree(self, item):
-        print(f"Expanding: {item.text(0)}. Clearing tree.")
+        for i in range(3):
+            parentItem = self.tree.topLevelItem(i)
+            print(f"Next: {parentItem.text(0)}. ")
         pass
         # This will remove all items, including the one just clicked
         #self.tree.clear()

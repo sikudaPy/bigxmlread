@@ -142,17 +142,15 @@ class BigXmlWidget(QTreeWidget, QWidget):
 
     @Slot()
     def expandBigXmlItem(self, itemBegin):
-        # if itemBegin:
         if itemBegin.childCount() == 1:
             if itemBegin.child(0).data(0, Qt.UserRole) == XmlItemType.Empty:
-                children = itemBegin.takeChildren()
-                children.clear()
+                itemBegin.takeChildren().clear()
                 currentEntry = itemBegin.data(1, Qt.UserRole)
                 self.currentFile.seek(0) 
                 xml = QXmlStreamReader(self.currentFile)
                 level = 0
                 indexEntry = [-1]
-                itemCurrent = None
+                # itemCurrent = self.takeTopLevelItem(0)
                 while not xml.atEnd():
                     tokentype = xml.readNext() 
                     match tokentype:
@@ -160,35 +158,22 @@ class BigXmlWidget(QTreeWidget, QWidget):
                                 level = level + 1
                                 if level == 1:
                                     indexEntry[0] = indexEntry[0]+1
-                                    itemCurrent = self.takeTopLevelItem(indexEntry[0])
+                                    itemCurr = self.topLevelItem(indexEntry[0])
                                 else:
                                     if len(indexEntry) < level:
-                                       indexEntry.insert(level-1, -1)  
-                                    if itemCurrent != None:
-                                        if itemCurrent.childCount() > 0:
-                                        # if indexEntry[level-1] < itemCurrent.childCount():
-                                            if itemCurrent.child(0).data( 0, Qt.UserRole) != XmlItemType.Attribute:
-                                                indexEntry[level-1] = indexEntry[level-1]+1
-                                                itemCurrent = itemCurrent.child(indexEntry[level-1])
-                                        else:
-                                            indexEntry[level-1] = indexEntry[level-1]+1
-                                            itemCurrent = itemCurrent.child(indexEntry[level-1])
-                                    else: 
-                                        return       
+                                       indexEntry.insert(level-1, -1) 
+                                    indexEntry[level-1] = indexEntry[level-1]+1 
+                                    itemCurr = itemCurr.child(indexEntry[level-1])   
+                                    iAttrs = xml.attributes().count()
+                                    if iAttrs > 0:
+                                        indexEntry.insert(level+1, iAttrs-1) 
+                                        indexEntry.pop()       
                                 
-                                #indexEntry.insert(level, indexEntry[level-1]+1)
+                                print(itemCurr.text(0))
                                 print(", ".join(map(str,indexEntry)))       
-                                # if indexEntry == currentEntry:
-                                #     item = QTreeWidgetItem("+")
-                                #     itemCurrent.addChild(item)
-                                #     itemCurrent = item
-                                #     itemCurrent.setText(0, xml.name())    
-                                #     itemCurrent.setData(0, Qt.UserRole, XmlItemType.Node)     
-                                    
-                            case QXmlStreamReader.EndElement:
-                                #pass
-                                if itemCurrent != None:
-                                     itemCurrent = itemCurrent.parent()
+                                            
+                            case QXmlStreamReader.EndElement:                              
+                                itemCurr = itemCurr.parent()
                                 level = level - 1 
 
     @Slot()

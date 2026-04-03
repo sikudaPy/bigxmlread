@@ -52,11 +52,11 @@ class BigXmlWidget(QTreeWidget, QWidget):
 
     def openFile(self, fileName: str, fOpenNew: bool):
         if self.fOpenNew:
-            self.currentFile.close()
             self.currentFile.setFileName(fileName)
             if self.currentFile.open(QIODevice.ReadOnly | QIODevice.Text):
                 self.currentFile.seek(0)
                 self.readBigXMLtoLevel(intTreeInitialLevel)
+                self.currentFile.close()
                 return True
             else:
                 QMessageBox.warning(self, self.tr("BigXmlReader"),
@@ -144,37 +144,68 @@ class BigXmlWidget(QTreeWidget, QWidget):
     def expandBigXmlItem(self, itemBegin):
         if itemBegin.childCount() == 1:
             if itemBegin.child(0).data(0, Qt.UserRole) == XmlItemType.Empty:
-                itemBegin.takeChildren().clear()
+                # itemBegin.takeChildren().clear()
                 currentEntry = itemBegin.data(1, Qt.UserRole)
-                self.currentFile.seek(0) 
-                xml = QXmlStreamReader(self.currentFile)
-                level = 0
-                indexEntry = [-1]
-                # itemCurrent = self.takeTopLevelItem(0)
-                while not xml.atEnd():
-                    tokentype = xml.readNext() 
-                    match tokentype:
+                print(", ".join(map(str,currentEntry)))
+                if self.currentFile.open(QIODevice.ReadOnly | QIODevice.Text):
+                    self.currentFile.seek(0)
+                
+                    xml = QXmlStreamReader(self.currentFile)
+                    level = 0
+                    indexEntry = [-1]
+                    itemCurrent = None
+                    fNeedReadData = False 
+                    while not xml.atEnd():
+                        tokentype = xml.readNext() 
+                        match tokentype:
                             case QXmlStreamReader.StartElement:
                                 level = level + 1
                                 if level == 1:
                                     indexEntry[0] = indexEntry[0]+1
-                                    itemCurr = self.topLevelItem(indexEntry[0])
+                                    itemCurrent = self.topLevelItem(indexEntry[0])
                                 else:
                                     if len(indexEntry) < level:
-                                       indexEntry.insert(level-1, -1) 
-                                    indexEntry[level-1] = indexEntry[level-1]+1 
-                                    itemCurr = itemCurr.child(indexEntry[level-1])   
+                                        indexEntry.insert(level-1, -1) 
+                                    indexEntry[level-1] = indexEntry[level-1]+1
+
+                                    if fNeedReadData:
+                                        item = QTreeWidgetItem("+")
+                                        itemCurrent.addChild(item)
+                                        indexEntry.insert(level, itemCurrent.childCount()-1)
+                                        itemCurrent = item
+                                        itemCurrent.setText(0, xml.name())    
+                                        itemCurrent.setData(0, Qt.UserRole, XmlItemType.Node)
+                                        #fNeedReadData = False
+                                        break
+                                    else:    
+                                        itemCurrent = itemCurrent.child(indexEntry[level-1])
+                                        #Empty_child
+                                        fNeedReadData = False
+                                        if itemCurrent:
+                                            if itemCurrent.childCount() == 1:
+                                                if itemCurrent.child(0).data(0, Qt.UserRole) == XmlItemType.Empty and indexEntry == currentEntry:
+                                                    itemCurrent.takeChildren()
+                                                    fNeedReadData = True           
+
                                     iAttrs = xml.attributes().count()
                                     if iAttrs > 0:
                                         indexEntry.insert(level+1, iAttrs-1) 
-                                        indexEntry.pop()       
-                                
-                                print(itemCurr.text(0))
-                                print(", ".join(map(str,indexEntry)))       
+                                        indexEntry.pop() 
+
+                                if itemCurrent: print(itemCurrent.text(0))
+                                else:
+                                    print("Error item")    
+                                print(", ".join(map(str,indexEntry)))
                                             
-                            case QXmlStreamReader.EndElement:                              
-                                itemCurr = itemCurr.parent()
-                                level = level - 1 
+                            case QXmlStreamReader.EndElement:     
+                                if itemCurrent:                         
+                                    itemCurrent = itemCurrent.parent()
+                                level = level - 1
+                                if fNeedReadData:
+                                    break
+
+                    self.currentFile.close()                
+
 
     @Slot()
     def enterBigXmlItem(self, itemBegin: QTreeWidgetItem):

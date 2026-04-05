@@ -162,7 +162,8 @@ class BigXmlWidget(QTreeWidget, QWidget):
                                 level = level + 1
                                 if level == 1:
                                     indexEntry[0] = indexEntry[0]+1
-                                    itemCurrent = self.topLevelItem(indexEntry[0])
+                                    if isOnTheWay(indexEntry, currentEntry): 
+                                        itemCurrent = self.topLevelItem(indexEntry[0])
                                 else:
                                     if len(indexEntry) < level:
                                         indexEntry.insert(level-1, -1) 
@@ -197,7 +198,7 @@ class BigXmlWidget(QTreeWidget, QWidget):
                                         itemCurrent.addChild(item)    
                                         break
                                     else: 
-                                        if itemCurrent and itemCurrent.childCount() > 0:   
+                                        if isOnTheWay(indexEntry, currentEntry):   
                                             itemCurrent = itemCurrent.child(indexEntry[level-1])
                                             #Empty_child
                                             fNeedReadData = False
@@ -207,20 +208,19 @@ class BigXmlWidget(QTreeWidget, QWidget):
                                                         itemCurrent.takeChildren().clear()
                                                         fNeedReadData = True           
 
-                                    iAttrs = xml.attributes().count()
-                                    if iAttrs > 0:
-                                        indexEntry.insert(level+1, iAttrs-1) 
-                                        indexEntry.pop() 
+                                    # iAttrs = xml.attributes().count()
+                                    # if iAttrs > 0:
+                                    #     indexEntry.insert(level+1, iAttrs-1) 
+                                    #     #indexEntry.pop() 
 
-                                if itemCurrent: print(itemCurrent.text(0))
-                                else:
-                                    print("Error item")    
-                                print(", ".join(map(str,indexEntry)))
+                                # if itemCurrent: print(itemCurrent.text(0))
+                                # print(", ".join(map(str,indexEntry)))
                                             
                             case QXmlStreamReader.EndElement:     
-                                if itemCurrent:                         
-                                    itemCurrent = itemCurrent.parent()
                                 level = level - 1
+                                indexEntry.pop()
+                                if isOnTheWay(indexEntry, currentEntry):                         
+                                    itemCurrent = itemCurrent.parent()
                                 if fNeedReadData:
                                     break
 
@@ -246,4 +246,12 @@ class BigXmlWidget(QTreeWidget, QWidget):
         textDialog.exec()
         textDialog.close()
 
+#index on the way in currentEntry
+def isOnTheWay(indexEntry, currentEntry):
+    if len(indexEntry) <= len(currentEntry):
+        for i in range(len(indexEntry)):
+            if  currentEntry[i] != indexEntry[i]:
+                return False
+        return True    
+    return False    
     

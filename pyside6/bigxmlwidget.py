@@ -175,17 +175,37 @@ class BigXmlWidget(QTreeWidget, QWidget):
                                         itemCurrent = item
                                         itemCurrent.setText(0, xml.name())    
                                         itemCurrent.setData(0, Qt.UserRole, XmlItemType.Node)
-                                        #fNeedReadData = False
+                                        itemCurrent.setData(1, Qt.UserRole, indexEntry)
+                                        iAttr = 0
+                                        indexEntry.insert(level+1,0)
+                                        for attr in xml.attributes():
+                                            childItem = QTreeWidgetItem("-")
+                                            childItem.setText(0, attr.name())
+                                            childItem.setText(1, attr.value())
+                                            childItem.setData(0, Qt.UserRole,XmlItemType.Attribute)
+                                            childItem.setIcon(0, self.icon_file)
+                                            itemCurrent.addChild(childItem)
+                                            
+                                            indexEntry[level]=iAttr 
+                                            childItem.setData(1, Qt.UserRole, indexEntry)
+                                            iAttr = iAttr + 1
+                                            #DEBUG
+                                            childItem.setText(2, ", ".join(map(str,indexEntry)))
+                                        indexEntry.pop()
+                                        item = QTreeWidgetItem("")
+                                        item.setData(0, Qt.UserRole, XmlItemType.Empty)
+                                        itemCurrent.addChild(item)    
                                         break
-                                    else:    
-                                        itemCurrent = itemCurrent.child(indexEntry[level-1])
-                                        #Empty_child
-                                        fNeedReadData = False
-                                        if itemCurrent:
-                                            if itemCurrent.childCount() == 1:
-                                                if itemCurrent.child(0).data(0, Qt.UserRole) == XmlItemType.Empty and indexEntry == currentEntry:
-                                                    itemCurrent.takeChildren()
-                                                    fNeedReadData = True           
+                                    else: 
+                                        if itemCurrent and itemCurrent.childCount() > 0:   
+                                            itemCurrent = itemCurrent.child(indexEntry[level-1])
+                                            #Empty_child
+                                            fNeedReadData = False
+                                            if itemCurrent:
+                                                if itemCurrent.childCount() == 1:
+                                                    if itemCurrent.child(0).data(0, Qt.UserRole) == XmlItemType.Empty and indexEntry == currentEntry:
+                                                        itemCurrent.takeChildren().clear()
+                                                        fNeedReadData = True           
 
                                     iAttrs = xml.attributes().count()
                                     if iAttrs > 0:

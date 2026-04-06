@@ -172,11 +172,12 @@ class BigXmlWidget(QTreeWidget, QWidget):
                                     if isNextLevel(indexEntry, currentEntry):
                                         item = QTreeWidgetItem("+")
                                         itemCurrent.addChild(item)
-                                        indexEntry.insert(level, itemCurrent.childCount()-1)
                                         itemCurrent = item
                                         itemCurrent.setText(0, xml.name())    
                                         itemCurrent.setData(0, Qt.UserRole, XmlItemType.Node)
                                         itemCurrent.setData(1, Qt.UserRole, indexEntry)
+                                        #DEBUG
+                                        itemCurrent.setText(2, ", ".join(map(str,indexEntry)))
                                         iAttr = 0
                                         indexEntry.insert(level+1,0)
                                         for attr in xml.attributes():
@@ -196,7 +197,6 @@ class BigXmlWidget(QTreeWidget, QWidget):
                                         item = QTreeWidgetItem("")
                                         item.setData(0, Qt.UserRole, XmlItemType.Empty)
                                         itemCurrent.addChild(item)    
-                                        #break
                                     else: 
                                         if isOnTheWay(indexEntry, currentEntry):   
                                             itemCurrent = itemCurrent.child(indexEntry[level-1])
@@ -204,14 +204,9 @@ class BigXmlWidget(QTreeWidget, QWidget):
                                             fNeedReadData = False
                                             if itemCurrent:
                                                 if itemCurrent.childCount() == 1:
-                                                    if itemCurrent.child(0).data(0, Qt.UserRole) == XmlItemType.Empty and indexEntry == currentEntry:
+                                                    if itemCurrent.child(0).data(0, Qt.UserRole) == XmlItemType.Empty: #and indexEntry == currentEntry:
                                                         itemCurrent.takeChildren().clear()
                                                         #fNeedReadData = True           
-
-                                    # iAttrs = xml.attributes().count()
-                                    # if iAttrs > 0:
-                                    #     indexEntry.insert(level+1, iAttrs-1) 
-                                    #     #indexEntry.pop() 
 
                                 # if itemCurrent: print(itemCurrent.text(0))
                                 # print(", ".join(map(str,indexEntry)))
@@ -221,12 +216,10 @@ class BigXmlWidget(QTreeWidget, QWidget):
                                     itemCurrent.setText(1, xml.text())    
                                             
                             case QXmlStreamReader.EndElement:     
-                                if isOnTheWay(indexEntry, currentEntry):                         
+                                if isOnTheWay(indexEntry, currentEntry) or isNextLevel(indexEntry, currentEntry):                         
                                     itemCurrent = itemCurrent.parent()
-                                if len(indexEntry) > level:
+                                if len(indexEntry) > level:    
                                     indexEntry.pop()    
-                                #if fNeedReadData:
-                                #    break
                                 level = level - 1
 
                     self.currentFile.close()                

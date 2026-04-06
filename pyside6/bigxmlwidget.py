@@ -146,10 +146,9 @@ class BigXmlWidget(QTreeWidget, QWidget):
             if itemBegin.child(0).data(0, Qt.UserRole) == XmlItemType.Empty:
                 # itemBegin.takeChildren().clear()
                 currentEntry = itemBegin.data(1, Qt.UserRole)
-                print(", ".join(map(str,currentEntry)))
+                #print(", ".join(map(str,currentEntry)))
                 if self.currentFile.open(QIODevice.ReadOnly | QIODevice.Text):
                     self.currentFile.seek(0)
-                
                     xml = QXmlStreamReader(self.currentFile)
                     level = 0
                     indexEntry = [-1]
@@ -170,14 +169,12 @@ class BigXmlWidget(QTreeWidget, QWidget):
                                     indexEntry[level-1] = indexEntry[level-1]+1
 
                                     if isNextLevel(indexEntry, currentEntry):
-                                        item = QTreeWidgetItem("+")
-                                        itemCurrent.addChild(item)
-                                        itemCurrent = item
-                                        itemCurrent.setText(0, xml.name())    
-                                        itemCurrent.setData(0, Qt.UserRole, XmlItemType.Node)
-                                        itemCurrent.setData(1, Qt.UserRole, indexEntry)
+                                        item = QTreeWidgetItem("+")                         
+                                        item.setText(0, xml.name())    
+                                        item.setData(0, Qt.UserRole, XmlItemType.Node)
+                                        item.setData(1, Qt.UserRole, indexEntry)
                                         #DEBUG
-                                        itemCurrent.setText(2, ", ".join(map(str,indexEntry)))
+                                        item.setText(2, ", ".join(map(str,indexEntry)))
                                         iAttr = 0
                                         indexEntry.insert(level+1,0)
                                         for attr in xml.attributes():
@@ -186,7 +183,7 @@ class BigXmlWidget(QTreeWidget, QWidget):
                                             childItem.setText(1, attr.value())
                                             childItem.setData(0, Qt.UserRole,XmlItemType.Attribute)
                                             childItem.setIcon(0, self.icon_file)
-                                            itemCurrent.addChild(childItem)
+                                            item.addChild(childItem)
                                             
                                             indexEntry[level]=iAttr 
                                             childItem.setData(1, Qt.UserRole, indexEntry)
@@ -194,9 +191,11 @@ class BigXmlWidget(QTreeWidget, QWidget):
                                             #DEBUG
                                             childItem.setText(2, ", ".join(map(str,indexEntry)))
                                         indexEntry.pop()
-                                        item = QTreeWidgetItem("")
-                                        item.setData(0, Qt.UserRole, XmlItemType.Empty)
-                                        itemCurrent.addChild(item)    
+                                        item2 = QTreeWidgetItem("")
+                                        item2.setData(0, Qt.UserRole, XmlItemType.Empty)
+                                        item.addChild(item2) 
+                                        itemCurrent.addChild(item)  
+                                        #itemCurrent = item
                                     else: 
                                         if isOnTheWay(indexEntry, currentEntry):   
                                             itemCurrent = itemCurrent.child(indexEntry[level-1])
@@ -212,11 +211,11 @@ class BigXmlWidget(QTreeWidget, QWidget):
                                 # print(", ".join(map(str,indexEntry)))
 
                             case QXmlStreamReader.Characters | QXmlStreamReader.DTD | QXmlStreamReader.Comment:
-                                if isNextLevel(indexEntry, currentEntry):        
-                                    itemCurrent.setText(1, xml.text())    
+                                if isNextLevel(indexEntry, currentEntry) and len(indexEntry) == level:        
+                                    itemCurrent.child(indexEntry[level-1]).setText(1, xml.text())   
                                             
                             case QXmlStreamReader.EndElement:     
-                                if isOnTheWay(indexEntry, currentEntry) or isNextLevel(indexEntry, currentEntry):                         
+                                if isOnTheWay(indexEntry, currentEntry): #or isNextLevel(indexEntry, currentEntry):                         
                                     itemCurrent = itemCurrent.parent()
                                 if len(indexEntry) > level:    
                                     indexEntry.pop()    

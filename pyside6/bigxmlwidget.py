@@ -19,7 +19,7 @@ class XmlItemType(Enum):
 #      def type(self):
 #         return self.__type   
 
-intTreeInitialLevel = 5 #initial open level
+intTreeInitialLevel = 3 #initial open level
 
 class BigXmlWidget(QTreeWidget, QWidget):
 
@@ -169,7 +169,7 @@ class BigXmlWidget(QTreeWidget, QWidget):
                                         indexEntry.insert(level-1, -1) 
                                     indexEntry[level-1] = indexEntry[level-1]+1
 
-                                    if fNeedReadData:
+                                    if isNextLevel(indexEntry, currentEntry):
                                         item = QTreeWidgetItem("+")
                                         itemCurrent.addChild(item)
                                         indexEntry.insert(level, itemCurrent.childCount()-1)
@@ -196,7 +196,7 @@ class BigXmlWidget(QTreeWidget, QWidget):
                                         item = QTreeWidgetItem("")
                                         item.setData(0, Qt.UserRole, XmlItemType.Empty)
                                         itemCurrent.addChild(item)    
-                                        break
+                                        #break
                                     else: 
                                         if isOnTheWay(indexEntry, currentEntry):   
                                             itemCurrent = itemCurrent.child(indexEntry[level-1])
@@ -206,7 +206,7 @@ class BigXmlWidget(QTreeWidget, QWidget):
                                                 if itemCurrent.childCount() == 1:
                                                     if itemCurrent.child(0).data(0, Qt.UserRole) == XmlItemType.Empty and indexEntry == currentEntry:
                                                         itemCurrent.takeChildren().clear()
-                                                        fNeedReadData = True           
+                                                        #fNeedReadData = True           
 
                                     # iAttrs = xml.attributes().count()
                                     # if iAttrs > 0:
@@ -215,14 +215,19 @@ class BigXmlWidget(QTreeWidget, QWidget):
 
                                 # if itemCurrent: print(itemCurrent.text(0))
                                 # print(", ".join(map(str,indexEntry)))
+
+                            case QXmlStreamReader.Characters | QXmlStreamReader.DTD | QXmlStreamReader.Comment:
+                                if isNextLevel(indexEntry, currentEntry):        
+                                    itemCurrent.setText(1, xml.text())    
                                             
                             case QXmlStreamReader.EndElement:     
-                                level = level - 1
-                                indexEntry.pop()
                                 if isOnTheWay(indexEntry, currentEntry):                         
                                     itemCurrent = itemCurrent.parent()
-                                if fNeedReadData:
-                                    break
+                                if len(indexEntry) > level:
+                                    indexEntry.pop()    
+                                #if fNeedReadData:
+                                #    break
+                                level = level - 1
 
                     self.currentFile.close()                
 
@@ -255,3 +260,10 @@ def isOnTheWay(indexEntry, currentEntry):
         return True    
     return False    
     
+def isNextLevel(indexEntry, currentEntry):
+    if len(indexEntry) == len(currentEntry)+1:
+        for i in range(len(currentEntry)):
+            if  currentEntry[i] != indexEntry[i]:
+                return False
+        return True    
+    return False     

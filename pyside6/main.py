@@ -4,8 +4,8 @@ from PySide6.QtCore import (QByteArray, QFile, QFileInfo, QSaveFile, QSettings,
                             QTextStream, Qt, Slot, QXmlStreamReader, QDir)
 from PySide6.QtGui import QIcon, QAction, QKeySequence
 from PySide6.QtWidgets import (QApplication, QFileDialog, QMainWindow,
-                               QMessageBox, QTextEdit, QWidget, QVBoxLayout, QTreeWidget)
-from bigxmlwidget import BigXmlWidget
+                               QMessageBox, QWidget, QVBoxLayout, QHBoxLayout)
+from bigxmlwidget import BigXmlWidget, QPlainTextEdit, QPushButton
 
 
 class MainWindow(QMainWindow):
@@ -15,10 +15,20 @@ class MainWindow(QMainWindow):
 
         self.centralwidget = QWidget(self)
         self.verticalLayout = QVBoxLayout(self.centralwidget)
+
+        self.findLayout = QHBoxLayout()
+        self.findText = QPlainTextEdit()
+        self.findText.setFixedHeight(30)
+        self.findLayout.addWidget(self.findText, stretch=100, alignment=Qt.AlignmentFlag.AlignTop|Qt.AlignmentFlag.AlignRight)
+        self.findButton = QPushButton(self.tr("Find"))
+        self.findLayout.addWidget(self.findButton, stretch=10, alignment=Qt.AlignmentFlag.AlignTop|Qt.AlignmentFlag.AlignRight)
+        self.verticalLayout.addLayout(self.findLayout) 
+        
         self.treeWidget = BigXmlWidget(self.centralwidget)
-        self.verticalLayout.addWidget(self.treeWidget)
+        self.verticalLayout.addWidget(self.treeWidget, stretch=1000)
         self.setCentralWidget(self.centralwidget)
 
+        self.findButton.clicked.connect(self.treeWidget.findInXML)
         self.create_actions()
         self.create_menus()
         self.statusBar().showMessage(self.tr("Ready"));

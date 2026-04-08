@@ -239,7 +239,6 @@ class BigXmlWidget(QTreeWidget, QWidget):
         textDialog.layout().addWidget(label)
 
         textDialog.setWindowTitle(self.tr("BigXmlReader"))
-        #connect(okButton, SIGNAL(pressed()), &textDialog, SLOT(accept()));
 
         textDialog.exec()
         textDialog.close()

@@ -33,7 +33,7 @@ class MainWindow(QMainWindow):
 
     @Slot()
     def find(self):
-        pass
+        self.treeWidget.findNodeDialog()
 
     @Slot()
     def findNext(self):

@@ -1,7 +1,7 @@
 from enum import Enum
 from PySide6.QtCore import QXmlStreamReader, QFile, QIODevice, Qt, Slot
-from PySide6.QtGui import QCursor, QFont, QIcon
-from PySide6.QtWidgets import QStyle, QTreeWidget, QWidget, QMessageBox, QTreeWidgetItem, QApplication, QPlainTextEdit, QVBoxLayout, QDialog
+from PySide6.QtGui import QCursor, QFont, QIcon, QPixmap
+from PySide6.QtWidgets import QStyle, QTreeWidget, QWidget, QMessageBox, QTreeWidgetItem, QApplication, QPlainTextEdit, QVBoxLayout, QHBoxLayout, QPushButton, QDialog
 
 
 class XmlItemType(Enum):
@@ -9,15 +9,6 @@ class XmlItemType(Enum):
     Node = 1
     Attribute = 2
     Comment = 3
-
-# class BigXmlItem(QTreeWidgetItem):
-#      def __init__(self, parent, type):
-#         super( BigXmlItem, self ).__init__( parent)
-#         self.__type = type
-
-#      @property
-#      def type(self):
-#         return self.__type   
 
 intTreeInitialLevel = 3 #initial open level
 
@@ -29,6 +20,7 @@ class BigXmlWidget(QTreeWidget, QWidget):
         self.fDebug = False  #show debug column  
 
         self.currentFile = QFile()
+        self.findString = ""
         self.readLevel = -1
         self.fOpenNew = True
         font = QFont("Arial", 10) # Шрифт и размер
@@ -38,9 +30,9 @@ class BigXmlWidget(QTreeWidget, QWidget):
         self.icon_dirOpen = style.standardIcon(QStyle.SP_DirOpenIcon)
         self.icon_dirClose = style.standardIcon(QStyle.SP_DirClosedIcon)
         self.icon_file = style.standardIcon(QStyle.SP_FileIcon)
-        #folderIcon = QIcon()
-        #folderIcon.addPixmap( QIcon(':/images/open.png'), QIcon.Normal, QIcon.On)
-        #folderIcon.addPixmap( QIcon(':/images/close.png'), QIcon.Normal, QIcon.Off)
+        folderIcon = QIcon()
+        folderIcon.addPixmap( QPixmap(':/images/open.png'), mode=QIcon.Normal, state=QIcon.On)
+        folderIcon.addPixmap( QPixmap(':/images/close.png'), mode=QIcon.Normal, state=QIcon.Off)
 
         if self.fDebug: HEADERS = (self.tr("Node/Attribute"), self.tr("Value"), self.tr("DEBUG"))
         else: HEADERS = (self.tr("Node/Attribute"), self.tr("Value"))
@@ -95,12 +87,11 @@ class BigXmlWidget(QTreeWidget, QWidget):
                         itemCurrent.setData(1, Qt.UserRole, indexEntry)
                         if self.fDebug: itemCurrent.setText(2, ", ".join(map(str,indexEntry)))
                         
-                        #itemCurrent.setIcon(0, self.icon_dirOpen)
                         if level == levelDown:
                             item = QTreeWidgetItem("")
                             item.setData(0, Qt.UserRole, XmlItemType.Empty)
                             itemCurrent.addChild(item)
-                            #itemCurrent.setIcon(0, self.icon_dirClose)
+                            itemCurrent.setIcon(0, self.icon_dirClose)
                         else:
                             iAttr = 0
                             indexEntry.insert(level+1,0)
@@ -117,6 +108,7 @@ class BigXmlWidget(QTreeWidget, QWidget):
                                 iAttr = iAttr + 1
                                 if self.fDebug: childItem.setText(2, ", ".join(map(str,indexEntry)))
                             indexEntry.pop()
+                            itemCurrent.setIcon(0, self.icon_dirOpen)
 
                 case QXmlStreamReader.EndElement:
                     if level <= levelDown:
@@ -139,7 +131,7 @@ class BigXmlWidget(QTreeWidget, QWidget):
     
     @Slot()
     def handleCollapsed(self, item):
-        #item.setIcon(0, self.icon_dirClose)
+        item.setIcon(0, self.icon_dirClose)
         pass
 
     @Slot()
@@ -147,6 +139,7 @@ class BigXmlWidget(QTreeWidget, QWidget):
 
         #last item is Empty - need repead read xml
         fNeedExpand = False
+        itemBegin.setIcon(0, self.icon_dirOpen)
         count = itemBegin.childCount()
         if count > 0 and itemBegin.child(count-1).data(0, Qt.UserRole) == XmlItemType.Empty:
             fNeedExpand = True
@@ -201,7 +194,8 @@ class BigXmlWidget(QTreeWidget, QWidget):
                                     #item.takeChildren().clear()    
                                     item2 = QTreeWidgetItem("")
                                     item2.setData(0, Qt.UserRole, XmlItemType.Empty)
-                                    item.addChild(item2) 
+                                    item.addChild(item2)
+                                    item.setIcon(0, self.icon_dirClose) 
                                 else: 
                                     if isOnTheWay(indexEntry, currentEntry):   
                                         itemCurrent = itemCurrent.child(indexEntry[level-1])
@@ -250,6 +244,70 @@ class BigXmlWidget(QTreeWidget, QWidget):
         textDialog.exec()
         textDialog.close()
 
+    #-------------------------------- find String ---------------------------------
+    def findNodeDialog(self):
+        
+            label = QPlainTextEdit(self)
+            label.setPlainText(self.findString)
+            label.setMaximumHeight(200)
+
+            #buttons = QHBoxLayout()
+            okButton = QPushButton(self.tr("Find"))
+            okButton.clicked.connect(self.findInXML)
+            #buttons.addWidget(okButton)
+            #cancelButton = QPushButton(self.tr("Cancel"))
+            #buttons.addWidget(cancelButton)
+
+            textDialog = QDialog(self)
+            textDialog.setMinimumSize(320, 240)
+            textDialog.setLayout(QVBoxLayout())
+            textDialog.layout().addWidget(label)
+            textDialog.layout().addWidget(okButton)
+            textDialog.setWindowTitle(self.tr("BigXmlReader"))
+
+            textDialog.exec()
+            textDialog.close()
+
+    #find  self.string in XML end return indexEntry
+    @Slot()
+    def findInXML(self):
+
+        if self.currentFile.open(QIODevice.ReadOnly | QIODevice.Text):
+            self.currentFile.seek(0)
+            xml = QXmlStreamReader(self.currentFile)
+            level = 0
+            indexEntry = [-1]
+            while not xml.atEnd():
+                tokentype = xml.readNext() 
+                match tokentype:
+                    case QXmlStreamReader.StartElement:
+                        level = level + 1
+                        if level == 1:
+                            indexEntry[0] = indexEntry[0]+1
+                        else:
+                            if len(indexEntry) < level:
+                                indexEntry.insert(level-1, -1) 
+                            indexEntry[level-1] = indexEntry[level-1]+1
+
+                            if self.findString in xml.name(): break
+                            for attr in xml.attributes():
+                                if self.findString in attr.name() or self.findString in attr.value():
+                                    break    
+                    case QXmlStreamReader.Characters | QXmlStreamReader.DTD | QXmlStreamReader.Comment:
+                        if self.findString in xml.text():
+                            break                               
+                    case QXmlStreamReader.EndElement:     
+                        level = level - 1
+
+            self.currentFile.close() 
+
+            if not xml.atEnd(): return None       
+            else: return indexEntry
+
+        else: return None        
+
+
+#--------------------------- index working ------------------------------------
 #index on the way in currentEntry
 def isOnTheWay(indexEntry, currentEntry):
     if len(indexEntry) <= len(currentEntry):
@@ -258,6 +316,7 @@ def isOnTheWay(indexEntry, currentEntry):
                 return False
         return True    
     return False    
+
 #index on next level for current (0,8,0->0,8,0,1)    
 def isNextLevel(indexEntry, currentEntry, levelStep=1):
     if len(indexEntry) == len(currentEntry)+levelStep:
@@ -265,4 +324,6 @@ def isNextLevel(indexEntry, currentEntry, levelStep=1):
             if  currentEntry[i] != indexEntry[i]:
                 return False
         return True    
-    return False     
+    return False 
+
+

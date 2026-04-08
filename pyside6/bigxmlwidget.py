@@ -17,7 +17,7 @@ class BigXmlWidget(QTreeWidget, QWidget):
     def __init__(self, parent):
         super( BigXmlWidget, self ).__init__( parent )
 
-        self.fDebug = False  #show debug column  
+        self.fDebug = True  #show debug column  
 
         self.currentFile = QFile()
         self.findString = ""
@@ -302,7 +302,9 @@ class BigXmlWidget(QTreeWidget, QWidget):
             self.currentFile.close() 
 
             if not xml.atEnd(): return None       
-            else: return indexEntry
+            else: 
+                if self.fDebug:  ", ".join(map(str,indexEntry))
+                return indexEntry
 
         else: return None        
 
@@ -326,4 +328,11 @@ def isNextLevel(indexEntry, currentEntry, levelStep=1):
         return True    
     return False 
 
+#less index than current
+def isLess(indexEntry, currentEntry):
+    lenMin = min(len(indexEntry), len(currentEntry))
+    for i in range(lenMin):
+        if  indexEntry[i] < currentEntry[i]:
+                return True
+    return False 
 

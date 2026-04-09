@@ -22,15 +22,13 @@ class MainWindow(QMainWindow):
         self.findText.setPlaceholderText(self.tr(" Find text in xml "))
         self.findLayout.addWidget(self.findText, stretch=100, alignment=Qt.AlignmentFlag.AlignTop|Qt.AlignmentFlag.AlignRight)
         self.findButton = QPushButton(self.tr(" Find... "))
-        #self.findText.setFixedHeight(self.findButton.sizeHint().height()+10)
         self.findLayout.addWidget(self.findButton, stretch=10, alignment=Qt.AlignmentFlag.AlignTop|Qt.AlignmentFlag.AlignRight)
-        #self.verticalLayout.addLayout(self.findLayout) 
-        
+                
         self.treeWidget = BigXmlWidget(self.centralwidget)
         self.verticalLayout.addWidget(self.treeWidget, stretch=1000)
         self.setCentralWidget(self.centralwidget)
 
-        self.findButton.clicked.connect(self.treeWidget.findInXML)
+        self.findButton.clicked.connect(self.find)
         self.create_actions()
         self.create_menus()
         self.statusBar().showMessage(self.tr("Ready"));
@@ -45,8 +43,16 @@ class MainWindow(QMainWindow):
                 self.verticalLayout.insertLayout(0, self.findLayout)
 
     # @Slot()
-    # def find(self):
-    #     self.treeWidget.findNodeDialog()
+    def find(self):
+        findString = self.findText.text()
+        currentEntry = self.treeWidget.findInXML(findString)
+        if currentEntry:
+            self.treeWidget.expandTocurrentEntry(currentEntry)
+        else:
+            dlg = QMessageBox(self)
+            dlg.setWindowTitle(self.tr("BigXmlReader"))
+            dlg.setText(self.tr("text: '"+findString+"' not found"))
+            dlg.exec() 
 
     # @Slot()
     # def findNext(self):

@@ -10,7 +10,8 @@ class XmlItemType(Enum):
     Attribute = 2
     Comment = 3
 
-intTreeInitialLevel = 3 #initial open level
+intTreeInitialReadLevel   = 3 #initial open level
+intTreeInitialExpandLevel = 1 #initial expand level
 
 class BigXmlWidget(QTreeWidget, QWidget):
 
@@ -30,9 +31,9 @@ class BigXmlWidget(QTreeWidget, QWidget):
         self.icon_dirOpen = style.standardIcon(QStyle.SP_DirOpenIcon)
         self.icon_dirClose = style.standardIcon(QStyle.SP_DirClosedIcon)
         self.icon_file = style.standardIcon(QStyle.SP_FileIcon)
-        folderIcon = QIcon()
-        folderIcon.addPixmap( QPixmap(':/images/open.png'), mode=QIcon.Normal, state=QIcon.On)
-        folderIcon.addPixmap( QPixmap(':/images/close.png'), mode=QIcon.Normal, state=QIcon.Off)
+        # folderIcon = QIcon()
+        # folderIcon.addPixmap( QPixmap(':/images/open.png'), mode=QIcon.Normal, state=QIcon.On)
+        # folderIcon.addPixmap( QPixmap(':/images/close.png'), mode=QIcon.Normal, state=QIcon.Off)
 
         if self.fDebug: HEADERS = (self.tr("Node/Attribute"), self.tr("Value"), self.tr("DEBUG"))
         else: HEADERS = (self.tr("Node/Attribute"), self.tr("Value"))
@@ -44,14 +45,15 @@ class BigXmlWidget(QTreeWidget, QWidget):
         self.itemCollapsed.connect(self.handleCollapsed)
         self.itemActivated.connect(self.enterBigXmlItem)
 
-
     def openFile(self, fileName: str, fOpenNew: bool):
         if self.fOpenNew:
             self.currentFile.setFileName(fileName)
             if self.currentFile.open(QIODevice.ReadOnly | QIODevice.Text):
+                self.itemExpanded.disconnect()
                 self.currentFile.seek(0)
-                self.readBigXMLtoLevel(intTreeInitialLevel)
+                self.readBigXMLtoLevel()
                 self.currentFile.close()
+                self.itemExpanded.connect(self.expandBigXmlItem)
                 return True
             else:
                 QMessageBox.warning(self, self.tr("BigXmlReader"),
@@ -59,7 +61,7 @@ class BigXmlWidget(QTreeWidget, QWidget):
                 return False
         return True
 
-    def readBigXMLtoLevel(self,levelDown: int = 0):
+    def readBigXMLtoLevel(self, levelDown: int = 0):
         xml = QXmlStreamReader(self.currentFile)
         itemCurrent = QTreeWidgetItem("")
         
@@ -67,6 +69,7 @@ class BigXmlWidget(QTreeWidget, QWidget):
         self.clear()
         level = 0
         indexEntry = [0]
+        levelDown = intTreeInitialReadLevel
         while not xml.atEnd():
             tokentype = xml.readNext() 
             match tokentype:
@@ -108,7 +111,7 @@ class BigXmlWidget(QTreeWidget, QWidget):
                                 iAttr = iAttr + 1
                                 if self.fDebug: childItem.setText(2, ", ".join(map(str,indexEntry)))
                             indexEntry.pop()
-                            itemCurrent.setIcon(0, self.icon_dirOpen)
+                            #itemCurrent.setIcon(0, self.icon_dirOpen)
 
                 case QXmlStreamReader.EndElement:
                     if level <= levelDown:
@@ -123,7 +126,7 @@ class BigXmlWidget(QTreeWidget, QWidget):
                         #itemCurrent.setIcon(0, bookmarkIcon)
                         #itemCurrent.takeChildren().clear()
         
-        self.expandToDepth(intTreeInitialLevel-2)
+        self.expandToDepth(intTreeInitialExpandLevel)
         self.resizeColumnToContents(0)
         self.resizeColumnToContents(1)
         QApplication.restoreOverrideCursor()
@@ -131,22 +134,24 @@ class BigXmlWidget(QTreeWidget, QWidget):
     
     @Slot()
     def handleCollapsed(self, item):
-        item.setIcon(0, self.icon_dirClose)
-        pass
+        if item.icon(0):
+            item.setIcon(0, self.icon_dirClose)
 
     @Slot()
     def expandBigXmlItem(self, itemBegin):
 
+        # if len(currentEntry) < intTreeInitialExpandLevel+1:
+        #     return
+        #return    
         #last item is Empty - need repead read xml
         fNeedExpand = False
-        itemBegin.setIcon(0, self.icon_dirOpen)
         count = itemBegin.childCount()
         if count > 0 and itemBegin.child(count-1).data(0, Qt.UserRole) == XmlItemType.Empty:
             fNeedExpand = True
             itemBegin.removeChild(itemBegin.child(count-1))
 
         if fNeedExpand:
-            currentEntry = itemBegin.data(1, Qt.UserRole)
+            currentEntry =  itemBegin.data(1, Qt.UserRole)
             if self.currentFile.open(QIODevice.ReadOnly | QIODevice.Text):
                 self.currentFile.seek(0)
                 xml = QXmlStreamReader(self.currentFile)
@@ -195,6 +200,7 @@ class BigXmlWidget(QTreeWidget, QWidget):
                                     item2 = QTreeWidgetItem("")
                                     item2.setData(0, Qt.UserRole, XmlItemType.Empty)
                                     item.addChild(item2)
+                                    itemBegin.setIcon(0, self.icon_dirOpen)
                                     item.setIcon(0, self.icon_dirClose) 
                                 else: 
                                     if isOnTheWay(indexEntry, currentEntry):   
@@ -244,28 +250,28 @@ class BigXmlWidget(QTreeWidget, QWidget):
         textDialog.close()
 
     #-------------------------------- find String ---------------------------------
-    def findNodeDialog(self):
+    # def findNodeDialog(self):
         
-            label = QPlainTextEdit(self)
-            label.setPlainText(self.findString)
-            label.setMaximumHeight(200)
+    #         label = QPlainTextEdit(self)
+    #         label.setPlainText(self.findString)
+    #         label.setMaximumHeight(200)
 
-            #buttons = QHBoxLayout()
-            okButton = QPushButton(self.tr("Find"))
-            okButton.clicked.connect(self.findInXML)
-            #buttons.addWidget(okButton)
-            #cancelButton = QPushButton(self.tr("Cancel"))
-            #buttons.addWidget(cancelButton)
+    #         #buttons = QHBoxLayout()
+    #         okButton = QPushButton(self.tr("Find"))
+    #         okButton.clicked.connect(self.findInXML)
+    #         #buttons.addWidget(okButton)
+    #         #cancelButton = QPushButton(self.tr("Cancel"))
+    #         #buttons.addWidget(cancelButton)
 
-            textDialog = QDialog(self)
-            textDialog.setMinimumSize(320, 240)
-            textDialog.setLayout(QVBoxLayout())
-            textDialog.layout().addWidget(label)
-            textDialog.layout().addWidget(okButton)
-            textDialog.setWindowTitle(self.tr("BigXmlReader"))
+    #         textDialog = QDialog(self)
+    #         textDialog.setMinimumSize(320, 240)
+    #         textDialog.setLayout(QVBoxLayout())
+    #         textDialog.layout().addWidget(label)
+    #         textDialog.layout().addWidget(okButton)
+    #         textDialog.setWindowTitle(self.tr("BigXmlReader"))
 
-            textDialog.exec()
-            textDialog.close()
+    #         textDialog.exec()
+    #         textDialog.close()
 
     #find  self.string in XML end return indexEntry
     @Slot()

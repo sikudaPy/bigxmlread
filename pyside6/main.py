@@ -4,8 +4,8 @@ from PySide6.QtCore import (QByteArray, QFile, QFileInfo, QSaveFile, QSettings,
                             QTextStream, Qt, Slot, QXmlStreamReader, QDir)
 from PySide6.QtGui import QIcon, QAction, QKeySequence
 from PySide6.QtWidgets import (QApplication, QFileDialog, QMainWindow,
-                               QMessageBox, QWidget, QVBoxLayout, QHBoxLayout)
-from bigxmlwidget import BigXmlWidget, QPlainTextEdit, QPushButton
+                               QMessageBox, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit)
+from bigxmlwidget import BigXmlWidget, QPlainTextEdit, QPushButton 
 
 
 class MainWindow(QMainWindow):
@@ -15,14 +15,16 @@ class MainWindow(QMainWindow):
 
         self.centralwidget = QWidget(self)
         self.verticalLayout = QVBoxLayout(self.centralwidget)
-
         self.findLayout = QHBoxLayout()
-        self.findText = QPlainTextEdit()
-        self.findText.setFixedHeight(30)
+        # self.findTextLabel = QLabel(self.tr("Find:"))
+        # self.findLayout.addWidget(self.findTextLabel, stretch=10, alignment=Qt.AlignmentFlag.AlignTop|Qt.AlignmentFlag.AlignRight)
+        self.findText = QLineEdit()
+        self.findText.setPlaceholderText(self.tr(" Find text in xml "))
         self.findLayout.addWidget(self.findText, stretch=100, alignment=Qt.AlignmentFlag.AlignTop|Qt.AlignmentFlag.AlignRight)
-        self.findButton = QPushButton(self.tr("Find"))
+        self.findButton = QPushButton(self.tr(" Find... "))
+        #self.findText.setFixedHeight(self.findButton.sizeHint().height()+10)
         self.findLayout.addWidget(self.findButton, stretch=10, alignment=Qt.AlignmentFlag.AlignTop|Qt.AlignmentFlag.AlignRight)
-        self.verticalLayout.addLayout(self.findLayout) 
+        #self.verticalLayout.addLayout(self.findLayout) 
         
         self.treeWidget = BigXmlWidget(self.centralwidget)
         self.verticalLayout.addWidget(self.treeWidget, stretch=1000)
@@ -39,15 +41,16 @@ class MainWindow(QMainWindow):
     def open(self):
         fileName = QFileDialog.getOpenFileName(self, self.tr("Choose XML file"), QDir.currentPath(), self.tr("XML Files (*.xml)"))
         if fileName:
-            self.treeWidget.openFile(fileName[0], True)
+            if self.treeWidget.openFile(fileName[0], True):
+                self.verticalLayout.insertLayout(0, self.findLayout)
 
-    @Slot()
-    def find(self):
-        self.treeWidget.findNodeDialog()
+    # @Slot()
+    # def find(self):
+    #     self.treeWidget.findNodeDialog()
 
-    @Slot()
-    def findNext(self):
-        pass
+    # @Slot()
+    # def findNext(self):
+    #     pass
 
     @Slot()
     def about(self):
@@ -60,11 +63,11 @@ class MainWindow(QMainWindow):
         self._file_menu.addSeparator()
         self._file_menu.addAction(self._exit_act)
 
-        self.menuBar().addSeparator()
+        # self.menuBar().addSeparator()
 
-        self._edit_menu = self.menuBar().addMenu("&Find")
-        self._edit_menu.addAction(self._find_act)
-        self._edit_menu.addAction(self._findnext_act)
+        # self._edit_menu = self.menuBar().addMenu("&Find")
+        # self._edit_menu.addAction(self._find_act)
+        # self._edit_menu.addAction(self._findnext_act)
 
         self.menuBar().addSeparator()
 
@@ -86,17 +89,17 @@ class MainWindow(QMainWindow):
 
         #---------------------------------------------------------
 
-        icon = QIcon.fromTheme(QIcon.ThemeIcon.EditFind, QIcon(':/images/find.png'))
-        self._find_act = QAction(icon, self.tr("&Find..."), self,
-                                 shortcut=QKeySequence.StandardKey.Find,
-                                 statusTip=self.tr("Find"),
-                                 triggered=self.find)
+        # icon = QIcon.fromTheme(QIcon.ThemeIcon.EditFind, QIcon(':/images/find.png'))
+        # self._find_act = QAction(icon, self.tr("&Find..."), self,
+        #                          shortcut=QKeySequence.StandardKey.Find,
+        #                          statusTip=self.tr("Find"),
+        #                          triggered=self.find)
 
-        icon = QIcon.fromTheme(QIcon.ThemeIcon.EditFind, QIcon(':/images/find.png'))
-        self._findnext_act = QAction(icon, self.tr("&Find next..."), self,
-                                 shortcut=QKeySequence.StandardKey.FindNext,
-                                 statusTip=self.tr("Find next"),
-                                 triggered=self.findNext)
+        # icon = QIcon.fromTheme(QIcon.ThemeIcon.EditFind, QIcon(':/images/find.png'))
+        # self._findnext_act = QAction(icon, self.tr("&Find next..."), self,
+        #                          shortcut=QKeySequence.StandardKey.FindNext,
+        #                          statusTip=self.tr("Find next"),
+        #                          triggered=self.findNext)
 
         #----------------------------------------------------------
 

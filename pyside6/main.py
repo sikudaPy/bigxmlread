@@ -45,7 +45,12 @@ class MainWindow(QMainWindow):
     # @Slot()
     def find(self):
         findString = self.findText.text()
-        currentEntry = self.treeWidget.findInXML(findString)
+
+        item = self.treeWidget.currentItem()
+        startWithEntry = []
+        if item: 
+            startWithEntry = item.data(1, Qt.UserRole)
+        currentEntry = self.treeWidget.findInXML(findString, startWithEntry)
         if currentEntry:
             self.treeWidget.expandTocurrentEntry(currentEntry)
         else:
@@ -53,10 +58,6 @@ class MainWindow(QMainWindow):
             dlg.setWindowTitle(self.tr("BigXmlReader"))
             dlg.setText(self.tr("text: '"+findString+"' not found"))
             dlg.exec() 
-
-    # @Slot()
-    # def findNext(self):
-    #     pass
 
     @Slot()
     def about(self):

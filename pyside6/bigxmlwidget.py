@@ -241,7 +241,7 @@ class BigXmlWidget(QTreeWidget, QWidget):
     #-------------------------------- find String ---------------------------------
 
     #find  self.string in XML end return indexEntry
-    def findInXML(self, findString: str):
+    def findInXML(self, findString: str, startWithEntry=[]):
 
         if self.currentFile.open(QIODevice.ReadOnly | QIODevice.Text):
             self.currentFile.seek(0)
@@ -261,16 +261,16 @@ class BigXmlWidget(QTreeWidget, QWidget):
                                 indexEntry.insert(level-1, -1) 
                             indexEntry[level-1] = indexEntry[level-1]+1
 
-                            if findString in xml.name(): 
+                            if findString in xml.name() and isMore(indexEntry, startWithEntry): 
                                 break
                             for attr in xml.attributes():
-                                if findString in attr.name() or findString in attr.value():
+                                if (findString in attr.name() or findString in attr.value()) and isMore(indexEntry, startWithEntry):
                                     fFoundinAttrs = True
                                     break 
                             if fFoundinAttrs:
                                 break       
                     case QXmlStreamReader.Characters | QXmlStreamReader.DTD | QXmlStreamReader.Comment:
-                        if findString in xml.text():
+                        if findString in xml.text() and isMore(indexEntry, startWithEntry):
                             break                               
                     case QXmlStreamReader.EndElement:     
                         level = level - 1
@@ -293,7 +293,8 @@ class BigXmlWidget(QTreeWidget, QWidget):
                 level = 0
                 item = None
                 indexEntry = [-1]
-                itemCurrent = None 
+                itemCurrent = None
+                fNeedReadXml = False 
                 while not xml.atEnd():
                     tokentype = xml.readNext() 
                     match tokentype:
@@ -308,7 +309,7 @@ class BigXmlWidget(QTreeWidget, QWidget):
                                     indexEntry.insert(level-1, -1) 
                                 indexEntry[level-1] = indexEntry[level-1]+1
 
-                                if isNextLevel(indexEntry, currentEntry):
+                                if fNeedReadXml:
                                     item = QTreeWidgetItem("+")                         
                                     item.setText(0, xml.name())    
                                     item.setData(0, Qt.UserRole, XmlItemType.Node)
@@ -330,31 +331,34 @@ class BigXmlWidget(QTreeWidget, QWidget):
                                         if self.fDebug: childItem.setText(2, ", ".join(map(str,indexEntry)))
                                     indexEntry.pop()
                                     itemCurrent.addChild(item) 
-                                if isNextLevel(indexEntry, currentEntry, 2) and item:
-                                    #item.takeChildren().clear()    
-                                    item2 = QTreeWidgetItem("")
-                                    item2.setData(0, Qt.UserRole, XmlItemType.Empty)
-                                    item.addChild(item2)
-                                    # itemBegin.setIcon(0, self.icon_dirOpen)
-                                    item.setIcon(0, self.icon_dirClose) 
-                                else: 
-                                    if isOnTheWay(indexEntry, currentEntry):   
-                                        itemCurrent = itemCurrent.child(indexEntry[level-1])
+                                # if isNextLevel(indexEntry, currentEntry, 2) and item:
+                                #     #item.takeChildren().clear()    
+                                #     item2 = QTreeWidgetItem("")
+                                #     item2.setData(0, Qt.UserRole, XmlItemType.Empty)
+                                #     item.addChild(item2)
+                                #     # itemBegin.setIcon(0, self.icon_dirOpen)
+                                #     item.setIcon(0, self.icon_dirClose) 
+                                 
+                                if isOnTheWay(indexEntry, currentEntry):   
+                                    itemCurrent = itemCurrent.child(indexEntry[level-1])
+                                    if item is None:
+                                        fNeedReadXml = True
+                                    else:
+                                        itemCurrent = item    
                                         count = itemCurrent.childCount()
                                         if count > 0 and itemCurrent.child(count-1).data(0, Qt.UserRole) == XmlItemType.Empty:
                                             itemCurrent.removeChild(itemCurrent.child(count-1)) 
-
-                            if currentEntry == indexEntry:
-                                self.setCurrentItem(itemCurrent) 
-                                return                          
+                                            fNeedReadXml = True
 
                         case QXmlStreamReader.Characters | QXmlStreamReader.DTD | QXmlStreamReader.Comment:
-                            if isNextLevel(indexEntry, currentEntry) and len(indexEntry) == level:        
-                                #itemCurrent.child(indexEntry[level-1]).setText(1, xml.text()) 
-                                if itemCurrent.childCount() > 0:
-                                    itemCurrent.child(itemCurrent.childCount()-1).setText(1, xml.text()) 
+                            if fNeedReadXml and len(indexEntry) == level: 
+                                itemCurrent.setText(1, xml.text())       
                                         
-                        case QXmlStreamReader.EndElement:     
+                        case QXmlStreamReader.EndElement:
+                            if currentEntry == indexEntry:
+                                self.setCurrentItem(itemCurrent) 
+                                return
+
                             if isOnTheWay(indexEntry, currentEntry):                         
                                 itemCurrent = itemCurrent.parent()
                             if len(indexEntry) > level:    
@@ -384,10 +388,10 @@ def isNextLevel(indexEntry, currentEntry, levelStep=1):
     return False 
 
 #less index than current
-def isLess(indexEntry, currentEntry):
+def isMore(indexEntry, currentEntry):
     lenMin = min(len(indexEntry), len(currentEntry))
     for i in range(lenMin):
-        if  indexEntry[i] < currentEntry[i]:
+        if  indexEntry[i] > currentEntry[i]:
                 return True
     return False 
 

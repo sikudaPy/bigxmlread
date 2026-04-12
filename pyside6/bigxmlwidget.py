@@ -287,6 +287,7 @@ class BigXmlWidget(QTreeWidget, QWidget):
 
         else: return None  
 
+    #expand tree to current entry index
     def expandToEntry(self, currentEntry):
   
         if currentEntry:
@@ -343,7 +344,7 @@ class BigXmlWidget(QTreeWidget, QWidget):
                                 #     item.setIcon(0, self.icon_dirClose) 
                                  
                                 if isOnTheWay(indexEntry, currentEntry):   
-                                    itemCurrent = itemCurrent.child(indexEntry[level-1])
+                                    item = itemCurrent.child(indexEntry[level-1])
                                     if item is None:
                                         fNeedReadXml = True
                                     else:
@@ -360,7 +361,6 @@ class BigXmlWidget(QTreeWidget, QWidget):
                         case QXmlStreamReader.EndElement:
                             if currentEntry == indexEntry:
                                 self.setCurrentItem(itemCurrent) 
-                                break
 
                             if isOnTheWay(indexEntry, currentEntry):                         
                                 itemCurrent = itemCurrent.parent()
@@ -375,7 +375,7 @@ class BigXmlWidget(QTreeWidget, QWidget):
 #index on the way in currentEntry
 def isOnTheWay(indexEntry, currentEntry):
     if len(indexEntry) <= len(currentEntry):
-        for i in range(len(indexEntry)):
+        for i in range(len(indexEntry)-1):
             if  currentEntry[i] != indexEntry[i]:
                 return False
         return True    
@@ -396,6 +396,6 @@ def isMore(indexEntry, currentEntry):
     for i in range(lenMin):
         if  indexEntry[i] > currentEntry[i]:
                 return True
-    if len(indexEntry) >= len(currentEntry): return True
+    if len(indexEntry) > len(currentEntry): return True
     else: return False 
 

@@ -52,7 +52,7 @@ class MainWindow(QMainWindow):
             startWithEntry = item.data(1, Qt.UserRole)
         currentEntry = self.treeWidget.findInXML(findString, startWithEntry)
         if currentEntry:
-            self.treeWidget.expandTocurrentEntry(currentEntry)
+            self.treeWidget.expandToEntry(currentEntry)
         else:
             dlg = QMessageBox(self)
             dlg.setWindowTitle(self.tr("BigXmlReader"))

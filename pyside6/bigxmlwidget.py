@@ -261,17 +261,20 @@ class BigXmlWidget(QTreeWidget, QWidget):
                                 indexEntry.insert(level-1, -1) 
                             indexEntry[level-1] = indexEntry[level-1]+1
 
-                            if findString in xml.name() and isMore(indexEntry, startWithEntry): 
-                                break
+                            if findString in xml.name():
+                                if isMore(indexEntry, startWithEntry): 
+                                    break
                             for attr in xml.attributes():
-                                if (findString in attr.name() or findString in attr.value()) and isMore(indexEntry, startWithEntry):
-                                    fFoundinAttrs = True
-                                    break 
+                                if (findString in attr.name() or findString in attr.value()):
+                                    if isMore(indexEntry, startWithEntry):
+                                        fFoundinAttrs = True
+                                        break 
                             if fFoundinAttrs:
                                 break       
                     case QXmlStreamReader.Characters | QXmlStreamReader.DTD | QXmlStreamReader.Comment:
-                        if findString in xml.text() and isMore(indexEntry, startWithEntry):
-                            break                               
+                        if findString in xml.text():
+                            if isMore(indexEntry, startWithEntry):
+                                break                               
                     case QXmlStreamReader.EndElement:     
                         level = level - 1
 
@@ -284,7 +287,7 @@ class BigXmlWidget(QTreeWidget, QWidget):
 
         else: return None  
 
-    def expandTocurrentEntry(self, currentEntry):
+    def expandToEntry(self, currentEntry):
   
         if currentEntry:
             if self.currentFile.open(QIODevice.ReadOnly | QIODevice.Text):
@@ -357,7 +360,7 @@ class BigXmlWidget(QTreeWidget, QWidget):
                         case QXmlStreamReader.EndElement:
                             if currentEntry == indexEntry:
                                 self.setCurrentItem(itemCurrent) 
-                                return
+                                break
 
                             if isOnTheWay(indexEntry, currentEntry):                         
                                 itemCurrent = itemCurrent.parent()
@@ -387,11 +390,12 @@ def isNextLevel(indexEntry, currentEntry, levelStep=1):
         return True    
     return False 
 
-#less index than current
+#more index than current or inside
 def isMore(indexEntry, currentEntry):
     lenMin = min(len(indexEntry), len(currentEntry))
     for i in range(lenMin):
         if  indexEntry[i] > currentEntry[i]:
                 return True
-    return False 
+    if len(indexEntry) >= len(currentEntry): return True
+    else: return False 
 

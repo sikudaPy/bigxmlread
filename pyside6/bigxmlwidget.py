@@ -61,6 +61,7 @@ class BigXmlWidget(QTreeWidget, QWidget):
                 return False
         return True
 
+    #open file to initial level
     def readBigXMLtoLevel(self, levelDown: int = 0):
         xml = QXmlStreamReader(self.currentFile)
         itemCurrent = QTreeWidgetItem("")
@@ -126,6 +127,7 @@ class BigXmlWidget(QTreeWidget, QWidget):
                         #itemCurrent.setIcon(0, bookmarkIcon)
                         #itemCurrent.takeChildren().clear()
         
+        self.currentFile.close() 
         self.expandToDepth(intTreeInitialExpandLevel)
         self.resizeColumnToContents(0)
         self.resizeColumnToContents(1)
@@ -137,6 +139,7 @@ class BigXmlWidget(QTreeWidget, QWidget):
         if item.icon(0):
             item.setIcon(0, self.icon_dirClose)
 
+    #expand next level with empty node
     @Slot()
     def expandBigXmlItem(self, itemBegin):
   
@@ -306,48 +309,50 @@ class BigXmlWidget(QTreeWidget, QWidget):
                             level = level + 1
                             if level == 1:
                                 indexEntry[0] = indexEntry[0]+1
-                                if isOnTheWay(indexEntry, currentEntry): 
+                                if isOnTheWayNotLastLevel(indexEntry, currentEntry): 
                                     itemCurrent = self.topLevelItem(indexEntry[0])
                             else:
                                 if len(indexEntry) < level:
                                     indexEntry.insert(level-1, -1) 
                                 indexEntry[level-1] = indexEntry[level-1]+1
 
-                                if fNeedReadXml:
-                                    item = QTreeWidgetItem("+")                         
-                                    item.setText(0, xml.name())    
-                                    item.setData(0, Qt.UserRole, XmlItemType.Node)
-                                    item.setData(1, Qt.UserRole, indexEntry)
-                                    if self.fDebug: item.setText(2, ", ".join(map(str,indexEntry)))
-                                    iAttr = 0
-                                    indexEntry.insert(level+1,0)
-                                    for attr in xml.attributes():
-                                        childItem = QTreeWidgetItem("-")
-                                        childItem.setText(0, attr.name())
-                                        childItem.setText(1, attr.value())
-                                        childItem.setData(0, Qt.UserRole,XmlItemType.Attribute)
-                                        childItem.setIcon(0, self.icon_file)
-                                        item.addChild(childItem)
-                                        
-                                        indexEntry[level]=iAttr 
-                                        childItem.setData(1, Qt.UserRole, indexEntry)
-                                        iAttr = iAttr + 1
-                                        if self.fDebug: childItem.setText(2, ", ".join(map(str,indexEntry)))
-                                    indexEntry.pop()
-                                    itemCurrent.addChild(item) 
-                                # if isNextLevel(indexEntry, currentEntry, 2) and item:
-                                #     #item.takeChildren().clear()    
-                                #     item2 = QTreeWidgetItem("")
-                                #     item2.setData(0, Qt.UserRole, XmlItemType.Empty)
-                                #     item.addChild(item2)
-                                #     # itemBegin.setIcon(0, self.icon_dirOpen)
-                                #     item.setIcon(0, self.icon_dirClose) 
+                                if isOnTheWayNotLastLevel(indexEntry, currentEntry): 
+                                
+                                    if fNeedReadXml:
+
+                                        if len(indexEntry) == len(currentEntry)+1 and item:
+                                            item2 = QTreeWidgetItem("")
+                                            item2.setData(0, Qt.UserRole, XmlItemType.Empty)
+                                            item.addChild(item2)
+                                            item.setIcon(0, self.icon_dirClose) 
+                                            item = None
+                                        if len(indexEntry) == len(currentEntry):
+                                            item = QTreeWidgetItem("+")                         
+                                            item.setText(0, xml.name())    
+                                            item.setData(0, Qt.UserRole, XmlItemType.Node)
+                                            item.setData(1, Qt.UserRole, indexEntry)
+                                            if self.fDebug: item.setText(2, ", ".join(map(str,indexEntry)))
+                                            iAttr = 0
+                                            indexEntry.insert(level+1,0)
+                                            for attr in xml.attributes():
+                                                childItem = QTreeWidgetItem("-")
+                                                childItem.setText(0, attr.name())
+                                                childItem.setText(1, attr.value())
+                                                childItem.setData(0, Qt.UserRole,XmlItemType.Attribute)
+                                                childItem.setIcon(0, self.icon_file)
+                                                item.addChild(childItem)
+                                                
+                                                indexEntry[level]=iAttr 
+                                                childItem.setData(1, Qt.UserRole, indexEntry)
+                                                iAttr = iAttr + 1
+                                                if self.fDebug: childItem.setText(2, ", ".join(map(str,indexEntry)))
+                                            indexEntry.pop()
+                                            itemCurrent.addChild(item) 
                                  
-                                if isOnTheWay(indexEntry, currentEntry):   
                                     item = itemCurrent.child(indexEntry[level-1])
                                     if item is None:
-                                        fNeedReadXml = True
-                                    else:
+                                        pass
+                                    else: 
                                         itemCurrent = item    
                                         count = itemCurrent.childCount()
                                         if count > 0 and itemCurrent.child(count-1).data(0, Qt.UserRole) == XmlItemType.Empty:
@@ -355,14 +360,14 @@ class BigXmlWidget(QTreeWidget, QWidget):
                                             fNeedReadXml = True
 
                         case QXmlStreamReader.Characters | QXmlStreamReader.DTD | QXmlStreamReader.Comment:
-                            if fNeedReadXml and len(indexEntry) == level: 
+                            if fNeedReadXml and len(indexEntry) == len(currentEntry): 
                                 itemCurrent.setText(1, xml.text())       
                                         
                         case QXmlStreamReader.EndElement:
                             if currentEntry == indexEntry:
                                 self.setCurrentItem(itemCurrent) 
 
-                            if isOnTheWay(indexEntry, currentEntry):                         
+                            if isOnTheWayNotLastLevel(indexEntry, currentEntry):                         
                                 itemCurrent = itemCurrent.parent()
                             if len(indexEntry) > level:    
                                 indexEntry.pop()    
@@ -375,13 +380,23 @@ class BigXmlWidget(QTreeWidget, QWidget):
 #index on the way in currentEntry
 def isOnTheWay(indexEntry, currentEntry):
     if len(indexEntry) <= len(currentEntry):
+        for i in range(len(indexEntry)):
+            if  currentEntry[i] != indexEntry[i]:
+                return False
+        return True    
+    return False 
+
+#index on the way in currentEntry
+def isOnTheWayNotLastLevel(indexEntry, currentEntry):
+    if len(indexEntry) <= len(currentEntry):
         for i in range(len(indexEntry)-1):
             if  currentEntry[i] != indexEntry[i]:
                 return False
         return True    
     return False    
 
-#index on next level for current (0,8,0->0,8,0,1)    
+
+#index on next level for current (step1 [0,8,0,1] in [0,8,0] )    
 def isNextLevel(indexEntry, currentEntry, levelStep=1):
     if len(indexEntry) == len(currentEntry)+levelStep:
         for i in range(len(currentEntry)):
@@ -390,7 +405,7 @@ def isNextLevel(indexEntry, currentEntry, levelStep=1):
         return True    
     return False 
 
-#more index than current or inside
+#more indexEntry inside current [0,8,0,1],[0,8,0,1,2] inside [0,8,0]
 def isMore(indexEntry, currentEntry):
     lenMin = min(len(indexEntry), len(currentEntry))
     for i in range(lenMin):

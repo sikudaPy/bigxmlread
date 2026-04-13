@@ -70,12 +70,6 @@ class MainWindow(QMainWindow):
         self._file_menu.addSeparator()
         self._file_menu.addAction(self._exit_act)
 
-        # self.menuBar().addSeparator()
-
-        # self._edit_menu = self.menuBar().addMenu("&Find")
-        # self._edit_menu.addAction(self._find_act)
-        # self._edit_menu.addAction(self._findnext_act)
-
         self.menuBar().addSeparator()
 
         self._help_menu = self.menuBar().addMenu("&Help")
@@ -95,20 +89,6 @@ class MainWindow(QMainWindow):
                                  statusTip=self.tr("Exit the application"), triggered=self.close)
 
         #---------------------------------------------------------
-
-        # icon = QIcon.fromTheme(QIcon.ThemeIcon.EditFind, QIcon(':/images/find.png'))
-        # self._find_act = QAction(icon, self.tr("&Find..."), self,
-        #                          shortcut=QKeySequence.StandardKey.Find,
-        #                          statusTip=self.tr("Find"),
-        #                          triggered=self.find)
-
-        # icon = QIcon.fromTheme(QIcon.ThemeIcon.EditFind, QIcon(':/images/find.png'))
-        # self._findnext_act = QAction(icon, self.tr("&Find next..."), self,
-        #                          shortcut=QKeySequence.StandardKey.FindNext,
-        #                          statusTip=self.tr("Find next"),
-        #                          triggered=self.findNext)
-
-        #----------------------------------------------------------
 
         icon = QIcon.fromTheme(QIcon.ThemeIcon.HelpAbout)
         self._about_act = QAction(icon, self.tr("&About"), self,

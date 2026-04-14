@@ -382,7 +382,7 @@ def isOnTheWay(indexEntry, currentEntry):
 #index on the way of entry (0,8,0), (0,8,0,3) (0,8,0,3,1) way of(0,8,0,2)
 def isOnTheNextEntry(indexEntry, currentEntry):
     if len(indexEntry) <= len(currentEntry)+1:
-        lenMin = min(len(indexEntry), len(currentEntry))-1
+        lenMin = min(len(indexEntry), len(currentEntry)-1)
         for i in range(lenMin):
             if  currentEntry[i] != indexEntry[i]:
                 return False

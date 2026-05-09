@@ -18,7 +18,7 @@ class BigXmlWidget(QTreeWidget, QWidget):
     def __init__(self, parent):
         super( BigXmlWidget, self ).__init__( parent )
 
-        self.fDebug = True  #show debug column  
+        self.fDebug = False #show debug column  
 
         self.currentFile = QFile()
         # self.findString = ""

@@ -24,7 +24,7 @@ class BigXmlWidget(QTreeWidget, QWidget):
         # self.findString = ""
         self.readLevel = -1
         self.fOpenNew = True
-        font = QFont("Arial", 10) # Шрифт и размер
+        font = QFont("Arial", 12) # Шрифт и размер
         self.setFont(font)
 
         style = QApplication.style()
@@ -37,6 +37,12 @@ class BigXmlWidget(QTreeWidget, QWidget):
         self.setColumnCount(len(HEADERS))
         self.setHeaderLabels(HEADERS)
         self.setAlternatingRowColors(True)
+        self.setStyleSheet("""
+        QTreeWidget {
+            background-color: white;           /* Standard rows */
+            alternate-background-color: #f2f2ff; /* Alternating rows */
+        }
+        """)
         
         self.itemExpanded.connect(self.expandBigXmlItem)
         self.itemCollapsed.connect(self.handleCollapsed)

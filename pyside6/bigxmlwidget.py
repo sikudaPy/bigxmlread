@@ -3,6 +3,7 @@ from PySide6.QtCore import QXmlStreamReader, QFile, QIODevice, Qt, Slot
 from PySide6.QtGui import QCursor, QFont, QIcon, QPixmap
 from PySide6.QtWidgets import QStyle, QTreeWidget, QWidget, QMessageBox, QTreeWidgetItem, QApplication, QPlainTextEdit, QVBoxLayout, QHBoxLayout, QPushButton, QDialog
 
+fLoadIcons = False
 
 class XmlItemType(Enum):
     Empty = 0
@@ -10,7 +11,7 @@ class XmlItemType(Enum):
     Attribute = 2
     Comment = 3
 
-intTreeInitialReadLevel   = 3 #initial open level
+intTreeInitialReadLevel   = 1 #initial open level
 intTreeInitialExpandLevel = 1 #initial expand level
 
 class BigXmlWidget(QTreeWidget, QWidget):
@@ -98,7 +99,8 @@ class BigXmlWidget(QTreeWidget, QWidget):
                             item = QTreeWidgetItem("")
                             item.setData(0, Qt.UserRole, XmlItemType.Empty)
                             itemCurrent.addChild(item)
-                            itemCurrent.setIcon(0, self.icon_dirClose)
+                            if fLoadIcons:
+                                itemCurrent.setIcon(0, self.icon_dirClose)
                         else:
                             iAttr = 0
                             indexEntry.insert(level+1,0)
@@ -107,7 +109,8 @@ class BigXmlWidget(QTreeWidget, QWidget):
                                 childItem.setText(0, attr.name())
                                 childItem.setText(1, attr.value())
                                 childItem.setData(0, Qt.UserRole,XmlItemType.Attribute)
-                                childItem.setIcon(0, self.icon_file)
+                                if fLoadIcons:
+                                    childItem.setIcon(0, self.icon_file)
                                 itemCurrent.addChild(childItem)
                                  
                                 indexEntry[level]=iAttr 
@@ -115,7 +118,6 @@ class BigXmlWidget(QTreeWidget, QWidget):
                                 iAttr = iAttr + 1
                                 if self.fDebug: childItem.setText(2, ", ".join(map(str,indexEntry)))
                             indexEntry.pop()
-                            #itemCurrent.setIcon(0, self.icon_dirOpen)
 
                 case QXmlStreamReader.EndElement:
                     if level <= levelDown:
@@ -136,7 +138,7 @@ class BigXmlWidget(QTreeWidget, QWidget):
     
     @Slot()
     def handleCollapsed(self, item):
-        if item.icon(0):
+        if item.icon(0) and fLoadIcons:
             item.setIcon(0, self.icon_dirClose)
 
     #expand next level with empty node
@@ -186,7 +188,8 @@ class BigXmlWidget(QTreeWidget, QWidget):
                                         childItem.setText(0, attr.name())
                                         childItem.setText(1, attr.value())
                                         childItem.setData(0, Qt.UserRole,XmlItemType.Attribute)
-                                        childItem.setIcon(0, self.icon_file)
+                                        if fLoadIcons:
+                                            childItem.setIcon(0, self.icon_file)
                                         item.addChild(childItem)
                                         
                                         indexEntry[level]=iAttr 
@@ -200,8 +203,9 @@ class BigXmlWidget(QTreeWidget, QWidget):
                                     item2 = QTreeWidgetItem("")
                                     item2.setData(0, Qt.UserRole, XmlItemType.Empty)
                                     item.addChild(item2)
-                                    itemBegin.setIcon(0, self.icon_dirOpen)
-                                    item.setIcon(0, self.icon_dirClose) 
+                                    if fLoadIcons:
+                                        itemBegin.setIcon(0, self.icon_dirOpen)
+                                        item.setIcon(0, self.icon_dirClose) 
                                 else: 
                                     if isOnTheWay(indexEntry, currentEntry):   
                                         itemCurrent = itemCurrent.child(indexEntry[level-1])          
@@ -332,7 +336,8 @@ class BigXmlWidget(QTreeWidget, QWidget):
                                                 childItem.setText(0, attr.name())
                                                 childItem.setText(1, attr.value())
                                                 childItem.setData(0, Qt.UserRole,XmlItemType.Attribute)
-                                                childItem.setIcon(0, self.icon_file)
+                                                if fLoadIcons:
+                                                    childItem.setIcon(0, self.icon_file)
                                                 item.addChild(childItem)
                                                 
                                                 indexEntry[level]=iAttr 
@@ -357,7 +362,8 @@ class BigXmlWidget(QTreeWidget, QWidget):
                                             item = QTreeWidgetItem("")
                                             item.setData(0, Qt.UserRole, XmlItemType.Empty)
                                             itemCurrent.addChild(item)
-                                            itemCurrent.setIcon(0, self.icon_dirClose) 
+                                            if fLoadIcons:
+                                                itemCurrent.setIcon(0, self.icon_dirClose) 
  
                         case QXmlStreamReader.Characters | QXmlStreamReader.DTD | QXmlStreamReader.Comment:
                             if fNeedReadXml and len(indexEntry) == len(currentEntry): 

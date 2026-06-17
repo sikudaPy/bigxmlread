@@ -40,6 +40,7 @@ class BigXmlWidget(QTreeWidget, QWidget):
         self.setAlternatingRowColors(True)
         self.setStyleSheet("""
         QTreeWidget {
+            color: black;
             background-color: white;           /* Standard rows */
             alternate-background-color: #f2f2ff; /* Alternating rows */
         }

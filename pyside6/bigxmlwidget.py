@@ -11,7 +11,7 @@ class XmlItemType(Enum):
     Attribute = 2
     Comment = 3
 
-intTreeInitialReadLevel   = 1 #initial open level
+intTreeInitialReadLevel   = 3 #initial open level
 intTreeInitialExpandLevel = 1 #initial expand level
 
 class BigXmlWidget(QTreeWidget, QWidget):
